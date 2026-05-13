@@ -50,6 +50,14 @@
             color: #999;
         }
 
+        .sync-status {
+            text-align: center;
+            font-size: 12px;
+            color: #667eea;
+            margin-bottom: 15px;
+            min-height: 20px;
+        }
+
         .input-group {
             display: flex;
             gap: 10px;
@@ -135,12 +143,6 @@
             transform: translateY(0);
         }
 
-        .todo-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
         .tabs {
             display: flex;
             gap: 10px;
@@ -170,23 +172,10 @@
             border-bottom-color: #667eea;
         }
 
-        .category-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            margin-right: 8px;
-        }
-
-        .category-badge.work {
-            background: #e8eeff;
-            color: #667eea;
-        }
-
-        .category-badge.life {
-            background: #ffe8f0;
-            color: #c2185b;
+        .todo-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
         .todo-item {
@@ -258,40 +247,6 @@
             transition: all 0.3s;
         }
 
-        .todo-time {
-            font-size: 12px;
-            color: #999;
-            margin-top: 6px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .deadline {
-            color: #667eea;
-            font-weight: 500;
-        }
-
-        .countdown {
-            display: inline-block;
-            padding: 4px 8px;
-            background: #f0f1ff;
-            border-radius: 4px;
-            font-size: 11px;
-            color: #667eea;
-            font-weight: 600;
-        }
-
-        .countdown.urgent {
-            background: #ffe8e8;
-            color: #ff6b6b;
-        }
-
-        .countdown.overdue {
-            background: #ff6b6b;
-            color: white;
-        }
-
         .delete-btn {
             width: 28px;
             height: 28px;
@@ -351,6 +306,59 @@
             color: #333;
             font-weight: 600;
             margin-bottom: 4px;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .category-badge.work {
+            background: #e8eeff;
+            color: #667eea;
+        }
+
+        .category-badge.life {
+            background: #ffe8f0;
+            color: #c2185b;
+        }
+
+        .todo-time {
+            font-size: 12px;
+            color: #999;
+            margin-top: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .deadline {
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .countdown {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #f0f1ff;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .countdown.urgent {
+            background: #ffe8e8;
+            color: #ff6b6b;
+        }
+
+        .countdown.overdue {
+            background: #ff6b6b;
+            color: white;
         }
 
         @media (max-width: 480px) {
@@ -418,68 +426,59 @@
         <div class="card">
             <div class="header">
                 <h1>📝 我的待办清单</h1>
-                <p>输入事项、选择截止时间，实时倒计时提醒</p>
+                <p>云端同步 • 手机电脑共用</p>
             </div>
 
+            <div class="sync-status" id="syncStatus">🔄 连接中...</div>
+
             <div class="input-group">
-                <input
-                    type="text"
-                    id="todoInput"
-                    placeholder="输入新的待办事项..."
-                    autocomplete="off"
-                >
+                <input type="text" id="todoInput" placeholder="输入新的待办事项..." autocomplete="off">
                 <select id="todoCategory">
                     <option value="work">工作</option>
                     <option value="life">生活</option>
                 </select>
-                <input
-                    type="datetime-local"
-                    id="todoDeadline"
-                    title="完成时间"
-                    step="3600"
-                >
+                <input type="datetime-local" id="todoDeadline" title="完成时间" step="3600">
                 <button id="addBtn">添加</button>
             </div>
 
             <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('all')">
-                    📋 全部
-                </button>
-                <button class="tab-btn" onclick="switchTab('work')">
-                    💼 工作
-                </button>
-                <button class="tab-btn" onclick="switchTab('life')">
-                    🎯 生活
-                </button>
+                <button class="tab-btn active" onclick="switchTab('all')">📋 全部</button>
+                <button class="tab-btn" onclick="switchTab('work')">💼 工作</button>
+                <button class="tab-btn" onclick="switchTab('life')">🎯 生活</button>
             </div>
 
             <div class="todo-list" id="todoList"></div>
 
             <div class="empty-state" id="emptyState" style="display: none;">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                </svg>
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
                 <p>还没有待办事项，开始添加吧！</p>
             </div>
 
             <div class="stats">
-                <span>
-                    <strong id="totalCount">0</strong>
-                    总数
-                </span>
-                <span>
-                    <strong id="completedCount">0</strong>
-                    已完成
-                </span>
-                <span>
-                    <strong id="remainingCount">0</strong>
-                    未完成
-                </span>
+                <span><strong id="totalCount">0</strong>总数</span>
+                <span><strong id="completedCount">0</strong>已完成</span>
+                <span><strong id="remainingCount">0</strong>未完成</span>
             </div>
         </div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+
     <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCdN8iQxr5ZjX5QfYnQYMxB0T5QfYnQYMxB",
+            authDomain: "todo-list-592f3.firebaseapp.com",
+            databaseURL: "https://todo-list-592f3-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "todo-list-592f3",
+            storageBucket: "todo-list-592f3.appspot.com",
+            messagingSenderId: "832745727900",
+            appId: "1:832745727900:web:abc123"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
         const todoInput = document.getElementById('todoInput');
         const todoCategory = document.getElementById('todoCategory');
         const todoDeadline = document.getElementById('todoDeadline');
@@ -489,41 +488,66 @@
         const totalCount = document.getElementById('totalCount');
         const completedCount = document.getElementById('completedCount');
         const remainingCount = document.getElementById('remainingCount');
+        const syncStatus = document.getElementById('syncStatus');
 
-        // 从 localStorage 加载待办列表
-        let todos = JSON.parse(localStorage.getItem('todos')) || [];
+        let todos = [];
         let currentTab = 'all';
+        let userId = null;
 
-        // 初始化
-        renderTodos();
-        updateStats();
+        function generateUserId() {
+            let uid = localStorage.getItem('uid');
+            if (!uid) {
+                uid = 'user_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('uid', uid);
+            }
+            return uid;
+        }
 
-        // 处理日期选择器 - 限制只显示小时，分钟始终为 00
+        userId = generateUserId();
+
+        firebase.database().ref('.info/connected').on('value', (snap) => {
+            if (snap.val() === true) {
+                syncStatus.textContent = '✅ 已同步';
+                syncStatus.style.color = '#67c26a';
+                loadTodosFromFirebase();
+            } else {
+                syncStatus.textContent = '⚠️ 离线模式';
+                syncStatus.style.color = '#ff9800';
+            }
+        });
+
+        function loadTodosFromFirebase() {
+            db.ref('users/' + userId + '/todos').on('value', (snapshot) => {
+                todos = [];
+                const data = snapshot.val();
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        todos.push({ id: key, ...data[key] });
+                    });
+                }
+                renderTodos();
+                updateStats();
+            });
+        }
+
         todoDeadline.addEventListener('change', () => {
             if (todoDeadline.value) {
-                // 强制将分钟设置为 00
                 let dateValue = todoDeadline.value;
                 if (dateValue.includes(':')) {
                     const parts = dateValue.split(':');
                     if (parts.length >= 2) {
-                        parts[1] = '00'; // 设置分钟为 00
+                        parts[1] = '00';
                         todoDeadline.value = parts.join(':');
                     }
                 }
             }
         });
 
-        // 每秒更新倒计时
-        setInterval(() => {
-            updateCountdowns();
-        }, 1000);
+        setInterval(() => { updateCountdowns(); }, 1000);
 
-        // 添加待办事项
         addBtn.addEventListener('click', addTodo);
         todoInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                addTodo();
-            }
+            if (e.key === 'Enter') addTodo();
         });
 
         function addTodo() {
@@ -532,11 +556,8 @@
                 alert('请输入待办事项');
                 return;
             }
-
             const category = todoCategory.value || 'work';
             let deadline = todoDeadline.value;
-
-            // 确保分钟为 00
             if (deadline) {
                 const parts = deadline.split(':');
                 if (parts.length >= 2) {
@@ -544,20 +565,8 @@
                     deadline = parts.join(':');
                 }
             }
-
-            const todo = {
-                id: Date.now(),
-                text: text,
-                category: category,
-                completed: false,
-                deadline: deadline || null,
-                createdAt: new Date().toLocaleString()
-            };
-
-            todos.unshift(todo);
-            saveTodos();
-            renderTodos();
-            updateStats();
+            const newTodo = { text, category, completed: false, deadline: deadline || null, createdAt: new Date().toLocaleString() };
+            db.ref('users/' + userId + '/todos').push().set(newTodo);
             todoInput.value = '';
             todoCategory.value = 'work';
             todoDeadline.value = '';
@@ -565,68 +574,35 @@
         }
 
         function deleteTodo(id) {
-            todos = todos.filter(todo => todo.id !== id);
-            saveTodos();
-            renderTodos();
-            updateStats();
+            db.ref('users/' + userId + '/todos/' + id).remove();
         }
 
         function toggleTodo(id) {
             const todo = todos.find(t => t.id === id);
             if (todo) {
-                todo.completed = !todo.completed;
-                saveTodos();
-                renderTodos();
-                updateStats();
+                db.ref('users/' + userId + '/todos/' + id + '/completed').set(!todo.completed);
             }
         }
 
         function switchTab(tab) {
             currentTab = tab;
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
             renderTodos();
         }
 
         function calculateCountdown(deadline) {
             if (!deadline) return null;
-
             const now = new Date();
             const deadlineDate = new Date(deadline);
             const diff = deadlineDate - now;
-
-            if (diff < 0) {
-                return {
-                    text: '已逾期',
-                    type: 'overdue',
-                    days: 0,
-                    hours: 0,
-                    minutes: 0,
-                    seconds: 0
-                };
-            }
-
+            if (diff < 0) return { text: '已逾期', type: 'overdue' };
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-            let text = '';
-            if (days > 0) {
-                text = `还剩 ${days}天 ${hours}小时`;
-            } else if (hours > 0) {
-                text = `还剩 ${hours}小时 ${minutes}分钟`;
-            } else if (minutes > 0) {
-                text = `还剩 ${minutes}分钟`;
-            } else {
-                text = `还剩 ${seconds}秒`;
-            }
-
+            let text = days > 0 ? `还剩 ${days}天 ${hours}小时` : hours > 0 ? `还剩 ${hours}小时 ${minutes}分钟` : `还剩 ${minutes}分钟`;
             const type = hours <= 1 ? 'urgent' : 'normal';
-
-            return { text, type, days, hours, minutes, seconds };
+            return { text, type };
         }
 
         function formatDeadline(deadline) {
@@ -638,75 +614,35 @@
             return `${month}-${day} ${hours}:00`;
         }
 
-        function getCategoryLabel(category) {
-            return category === 'work' ? '工作' : '生活';
-        }
-
         function renderTodos() {
             todoList.innerHTML = '';
-
-            // 根据当前 tab 过滤待办
-            let filtered = todos;
-            if (currentTab !== 'all') {
-                filtered = todos.filter(t => t.category === currentTab);
-            }
-
+            let filtered = currentTab === 'all' ? todos : todos.filter(t => t.category === currentTab);
             if (filtered.length === 0) {
                 emptyState.style.display = 'block';
                 return;
             }
-
             emptyState.style.display = 'none';
-
             filtered.forEach(todo => {
                 const li = document.createElement('div');
                 li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
                 li.id = `todo-${todo.id}`;
-
                 const countdown = calculateCountdown(todo.deadline);
                 const deadlineDisplay = formatDeadline(todo.deadline);
-
-                let timeHtml = '';
-                if (deadlineDisplay) {
-                    timeHtml = `
-                        <div class="todo-time">
-                            <div class="deadline">📅 ${deadlineDisplay}</div>
-                            <div class="countdown ${countdown?.type || ''}" data-id="${todo.id}">
-                                ${countdown?.text || '未设置截止时间'}
-                            </div>
-                        </div>
-                    `;
-                }
-
-                const categoryLabel = getCategoryLabel(todo.category);
+                let timeHtml = deadlineDisplay ? `<div class="todo-time"><div class="deadline">📅 ${deadlineDisplay}</div><div class="countdown ${countdown?.type || ''}">️${countdown?.text || ''}</div></div>` : '';
+                const categoryLabel = todo.category === 'work' ? '工作' : '生活';
                 const categoryBadgeClass = todo.category === 'work' ? 'work' : 'life';
-
-                li.innerHTML = `
-                    <div class="checkbox" onclick="toggleTodo(${todo.id})"></div>
-                    <div style="flex: 1;">
-                        <div class="todo-text">
-                            <span class="category-badge ${categoryBadgeClass}">${categoryLabel}</span>
-                            ${escapeHtml(todo.text)}
-                        </div>
-                        ${timeHtml}
-                    </div>
-                    <button class="delete-btn" onclick="deleteTodo(${todo.id})">×</button>
-                `;
+                li.innerHTML = `<div class="checkbox" onclick="toggleTodo('${todo.id}')"></div><div style="flex: 1;"><div class="todo-text"><span class="category-badge ${categoryBadgeClass}">${categoryLabel}</span>${escapeHtml(todo.text)}</div>${timeHtml}</div><button class="delete-btn" onclick="deleteTodo('${todo.id}')">×</button>`;
                 todoList.appendChild(li);
             });
         }
 
         function updateCountdowns() {
-            let filtered = todos;
-            if (currentTab !== 'all') {
-                filtered = todos.filter(t => t.category === currentTab);
-            }
-
+            let filtered = currentTab === 'all' ? todos : todos.filter(t => t.category === currentTab);
             filtered.forEach(todo => {
                 const element = document.querySelector(`#todo-${todo.id} .countdown`);
                 if (element && todo.deadline) {
                     const countdown = calculateCountdown(todo.deadline);
-                    element.textContent = countdown?.text || '未设置截止时间';
+                    element.textContent = countdown?.text || '';
                     element.className = `countdown ${countdown?.type || ''}`;
                 }
             });
@@ -716,14 +652,9 @@
             const total = todos.length;
             const completed = todos.filter(t => t.completed).length;
             const remaining = total - completed;
-
             totalCount.textContent = total;
             completedCount.textContent = completed;
             remainingCount.textContent = remaining;
-        }
-
-        function saveTodos() {
-            localStorage.setItem('todos', JSON.stringify(todos));
         }
 
         function escapeHtml(text) {
