@@ -50,12 +50,29 @@
             color: #999;
         }
 
-        .sync-status {
-            text-align: center;
-            font-size: 12px;
+        .sync-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .sync-btn {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .sync-btn:hover {
+            background: #e8e8e8;
+            border-color: #667eea;
             color: #667eea;
-            margin-bottom: 15px;
-            min-height: 20px;
         }
 
         .input-group {
@@ -117,10 +134,6 @@
             border-color: #667eea;
         }
 
-        #todoDeadline::placeholder {
-            color: #ccc;
-        }
-
         #addBtn {
             padding: 12px 24px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -137,10 +150,6 @@
         #addBtn:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-        }
-
-        #addBtn:active {
-            transform: translateY(0);
         }
 
         .tabs {
@@ -244,7 +253,6 @@
             font-size: 14px;
             color: #333;
             word-break: break-all;
-            transition: all 0.3s;
         }
 
         .delete-btn {
@@ -272,13 +280,6 @@
             text-align: center;
             padding: 40px 20px;
             color: #999;
-        }
-
-        .empty-state svg {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 20px;
-            opacity: 0.3;
         }
 
         .empty-state p {
@@ -361,6 +362,10 @@
             color: white;
         }
 
+        #importFile {
+            display: none;
+        }
+
         @media (max-width: 480px) {
             .card {
                 padding: 20px;
@@ -368,6 +373,15 @@
 
             .header h1 {
                 font-size: 24px;
+            }
+
+            .sync-buttons {
+                gap: 8px;
+            }
+
+            .sync-btn {
+                padding: 6px 12px;
+                font-size: 12px;
             }
 
             .input-group {
@@ -413,11 +427,6 @@
             .todo-item {
                 padding: 12px 14px;
             }
-
-            .category-badge {
-                font-size: 10px;
-                padding: 2px 6px;
-            }
         }
     </style>
 </head>
@@ -426,10 +435,13 @@
         <div class="card">
             <div class="header">
                 <h1>📝 我的待办清单</h1>
-                <p>云端同步 • 手机电脑共用</p>
+                <p>简单可靠 • 本地存储</p>
             </div>
 
-            <div class="sync-status" id="syncStatus">🔄 连接中...</div>
+            <div class="sync-buttons">
+                <button class="sync-btn" onclick="exportData()">📥 导出</button>
+                <button class="sync-btn" onclick="importData()">📤 导入</button>
+            </div>
 
             <div class="input-group">
                 <input type="text" id="todoInput" placeholder="输入新的待办事项..." autocomplete="off">
@@ -450,7 +462,6 @@
             <div class="todo-list" id="todoList"></div>
 
             <div class="empty-state" id="emptyState" style="display: none;">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
                 <p>还没有待办事项，开始添加吧！</p>
             </div>
 
@@ -462,23 +473,9 @@
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <input type="file" id="importFile" accept=".json">
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDovLKo3djdRbs963vqKdbj-geRWyzMTrg",
-            authDomain: "todo-list-592f3.firebaseapp.com",
-            databaseURL: "https://todo-list-592f3-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "todo-list-592f3",
-            storageBucket: "todo-list-592f3.appspot.com",
-            messagingSenderId: "832745727900",
-            appId: "1:832745727900:web:abc123"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
         const todoInput = document.getElementById('todoInput');
         const todoCategory = document.getElementById('todoCategory');
         const todoDeadline = document.getElementById('todoDeadline');
@@ -488,47 +485,13 @@
         const totalCount = document.getElementById('totalCount');
         const completedCount = document.getElementById('completedCount');
         const remainingCount = document.getElementById('remainingCount');
-        const syncStatus = document.getElementById('syncStatus');
+        const importFile = document.getElementById('importFile');
 
-        let todos = [];
+        let todos = JSON.parse(localStorage.getItem('todos')) || [];
         let currentTab = 'all';
-        let userId = null;
 
-        function generateUserId() {
-            let uid = localStorage.getItem('uid');
-            if (!uid) {
-                uid = 'user_' + Math.random().toString(36).substr(2, 9);
-                localStorage.setItem('uid', uid);
-            }
-            return uid;
-        }
-
-        userId = generateUserId();
-
-        firebase.database().ref('.info/connected').on('value', (snap) => {
-            if (snap.val() === true) {
-                syncStatus.textContent = '✅ 已同步';
-                syncStatus.style.color = '#67c26a';
-                loadTodosFromFirebase();
-            } else {
-                syncStatus.textContent = '⚠️ 离线模式';
-                syncStatus.style.color = '#ff9800';
-            }
-        });
-
-        function loadTodosFromFirebase() {
-            db.ref('users/' + userId + '/todos').on('value', (snapshot) => {
-                todos = [];
-                const data = snapshot.val();
-                if (data) {
-                    Object.keys(data).forEach(key => {
-                        todos.push({ id: key, ...data[key] });
-                    });
-                }
-                renderTodos();
-                updateStats();
-            });
-        }
+        renderTodos();
+        updateStats();
 
         todoDeadline.addEventListener('change', () => {
             if (todoDeadline.value) {
@@ -550,6 +513,31 @@
             if (e.key === 'Enter') addTodo();
         });
 
+        importFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        if (Array.isArray(data)) {
+                            todos = data;
+                            saveTodos();
+                            renderTodos();
+                            updateStats();
+                            alert('✅ 导入成功！');
+                        } else {
+                            alert('❌ 文件格式错误，请导入有效的 JSON 文件');
+                        }
+                    } catch (err) {
+                        alert('❌ 文件解析失败：' + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+            importFile.value = '';
+        });
+
         function addTodo() {
             const text = todoInput.value.trim();
             if (text === '') {
@@ -565,8 +553,18 @@
                     deadline = parts.join(':');
                 }
             }
-            const newTodo = { text, category, completed: false, deadline: deadline || null, createdAt: new Date().toLocaleString() };
-            db.ref('users/' + userId + '/todos').push().set(newTodo);
+            const todo = {
+                id: Date.now(),
+                text: text,
+                category: category,
+                completed: false,
+                deadline: deadline || null,
+                createdAt: new Date().toLocaleString()
+            };
+            todos.unshift(todo);
+            saveTodos();
+            renderTodos();
+            updateStats();
             todoInput.value = '';
             todoCategory.value = 'work';
             todoDeadline.value = '';
@@ -574,13 +572,19 @@
         }
 
         function deleteTodo(id) {
-            db.ref('users/' + userId + '/todos/' + id).remove();
+            todos = todos.filter(todo => todo.id !== id);
+            saveTodos();
+            renderTodos();
+            updateStats();
         }
 
         function toggleTodo(id) {
             const todo = todos.find(t => t.id === id);
             if (todo) {
-                db.ref('users/' + userId + '/todos/' + id + '/completed').set(!todo.completed);
+                todo.completed = !todo.completed;
+                saveTodos();
+                renderTodos();
+                updateStats();
             }
         }
 
@@ -625,13 +629,12 @@
             filtered.forEach(todo => {
                 const li = document.createElement('div');
                 li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
-                li.id = `todo-${todo.id}`;
                 const countdown = calculateCountdown(todo.deadline);
                 const deadlineDisplay = formatDeadline(todo.deadline);
                 let timeHtml = deadlineDisplay ? `<div class="todo-time"><div class="deadline">📅 ${deadlineDisplay}</div><div class="countdown ${countdown?.type || ''}">️${countdown?.text || ''}</div></div>` : '';
                 const categoryLabel = todo.category === 'work' ? '工作' : '生活';
                 const categoryBadgeClass = todo.category === 'work' ? 'work' : 'life';
-                li.innerHTML = `<div class="checkbox" onclick="toggleTodo('${todo.id}')"></div><div style="flex: 1;"><div class="todo-text"><span class="category-badge ${categoryBadgeClass}">${categoryLabel}</span>${escapeHtml(todo.text)}</div>${timeHtml}</div><button class="delete-btn" onclick="deleteTodo('${todo.id}')">×</button>`;
+                li.innerHTML = `<div class="checkbox" onclick="toggleTodo(${todo.id})"></div><div style="flex: 1;"><div class="todo-text"><span class="category-badge ${categoryBadgeClass}">${categoryLabel}</span>${escapeHtml(todo.text)}</div>${timeHtml}</div><button class="delete-btn" onclick="deleteTodo(${todo.id})">×</button>`;
                 todoList.appendChild(li);
             });
         }
@@ -639,11 +642,14 @@
         function updateCountdowns() {
             let filtered = currentTab === 'all' ? todos : todos.filter(t => t.category === currentTab);
             filtered.forEach(todo => {
-                const element = document.querySelector(`#todo-${todo.id} .countdown`);
-                if (element && todo.deadline) {
+                const elements = document.querySelectorAll(`[onclick*="toggleTodo(${todo.id})"]`);
+                if (elements.length > 0) {
                     const countdown = calculateCountdown(todo.deadline);
-                    element.textContent = countdown?.text || '';
-                    element.className = `countdown ${countdown?.type || ''}`;
+                    const countdownEl = elements[0].closest('.todo-item').querySelector('.countdown');
+                    if (countdownEl && todo.deadline) {
+                        countdownEl.textContent = countdown?.text || '';
+                        countdownEl.className = `countdown ${countdown?.type || ''}`;
+                    }
                 }
             });
         }
@@ -655,6 +661,25 @@
             totalCount.textContent = total;
             completedCount.textContent = completed;
             remainingCount.textContent = remaining;
+        }
+
+        function saveTodos() {
+            localStorage.setItem('todos', JSON.stringify(todos));
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(todos, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `todo-list-${new Date().toISOString().slice(0, 10)}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData() {
+            importFile.click();
         }
 
         function escapeHtml(text) {
